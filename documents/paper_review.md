@@ -27,4 +27,4 @@
 | :--- | :--- | :--- | :--- | :--- |
 | Athey | Causal Inference vs. ML | Meta analysis | the hotel pricing example | fundamental difference between econ and data science 
 | Card | Causal Effect of Education on Earnings | IV and family fixed-effects | within family and between family fixed effect, IV have higher upward bias than OLS, possible selection bias on groups affected by structural innovation such as pupil teacher ratio | canonical paper on IV and education
-| 
+| Card | Causal Return on Education | IV and RCT | "" | seminal paper for return on education | 
