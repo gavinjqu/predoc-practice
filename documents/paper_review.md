@@ -28,4 +28,4 @@
 | Athey | Causal Inference vs. ML | Meta analysis | the hotel pricing example | fundamental difference between econ and data science 
 | Card | Causal Effect of Education on Earnings | IV and family fixed-effects | within family and between family fixed effect, IV have higher upward bias than OLS, possible selection bias on groups affected by structural innovation such as pupil teacher ratio | canonical paper on IV and education
 | Card | Causal Return on Education | IV and RCT | "" | seminal paper for return on education | 
-| Spence | Signaling via Education Cost | Theory | Applicants will invest in a signal if the offered wage increase is greater than the cost of acquiring the signal | Canonical paper in labor | 
+| Spence | Signaling via Education Cost | Theory | Applicants will invest in a signal if the offered wage increase is greater than the cost of acquiring the signal, high-productivity workers must find it cheaper or easier to signal than low-productivity workers. | Canonical paper in labor | 
