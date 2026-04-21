@@ -28,6 +28,7 @@
 | Spence | 1973 | Signaling via Education Cost | Theory | Applicants will invest in a signal if the offered wage increase is greater than the cost of acquiring the signal, high-productivity workers must find it cheaper or easier to signal than low-productivity workers. | education is not actually making the workers more productive; it simply acts as a prerequisite to prove they are high-productivity | 
 | Acemonglu | xxxx | Why do new technology complement skills? Directed technical change and wage inequality | 
 | Athey | xxxx | Causal Forest | How CART can be modified to construct causal forest that is used for valid statistical inference | An Algorithmic approach to use random forest as statistical inference instruments to identify heterogenous treatment effect | Two forests are constructed to form counterfactual | ML methods for casual inference is the frontier of applied method research | 
+| Kenneth Arrow | 1963 | Normative analysis medical care | Corollary of optimality theorems | 1st - if competitive equilibrium exist, it's the pareto outcome, 2nd - if no increasing returns in production, then every optimal state is a competitive equilibrium | Healthcare market angle of labor econ | 
 ---
 
 # Four Foundational Questions
