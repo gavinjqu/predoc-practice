@@ -1,0 +1,399 @@
+---
+title: "Predoc Data Task 3" 
+author: "Gavin Qu"
+date: today
+format: 
+    html:
+        toc: true
+        toc-depth: 3
+        code-fold: true
+        code-summary: "Show code"
+        theme: cosmo
+jupyter: python3
+execute:
+    warning: false
+    echo: true
+---
+## Overview
+
+To render: run `quarto render analysis.qmd`
+Additional documentations for reproducibility see **README.md**
+
+## Setup
+
+```{python}
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import statsmodels.formula.api as smf
+
+pd.set_option("display.max_columns", 30)
+pd.set_option("display.float_format", "{:.2f}".format)
+```
+
+## Data Ingestion and Loading
+
+```{python}
+df = pd.read_csv("./data/cps_women_lfp.csv")
+df.info()
+df.head(10)
+```
+
+## Variable Inventory
+
+```{python}
+for col in df.select_dtypes(include="object").columns:
+    print(f"\n{col}")
+    print(df[col].value_counts(dropna=False))
+```
+
+## Year Coverage & Sample Size
+- Verify years 1994-2024, check for sample size
+```{python}
+df.groupby("year").size().plot(kind="bar", title="Observations per Year")
+plt.ylabel("N")
+plt.tight_layout()
+plt.show()
+```
+
+## Numeric Variable 
+- Check income variables for top-coding and missing values by column year
+```{python}
+print(df[["inctot", "incss", "income", "wgt"]].describe())
+
+df.groupby("year")[["inctot", "incss", "income"]].apply(
+    lambda x: x.isna().mean()
+).plot(title="Share Missing by Year (Income Variables)")
+plt.ylabel("Fraction missing")
+plt.tight_layout()
+plt.show()
+```
+
+## Telework Variable Availability
+
+```{python}
+# These should only be populated from ~2020 onward
+telework_cols = ["covid_telework", "covid_unemployed", "covid_paid",
+                 "telework_now", "telework_before", "telework_difference"]
+for col in telework_cols:
+    print(f"\n {col} by year ")
+    print(df.groupby("year")[col].apply(lambda x: (x.notna() & (x != "NIU")).mean()))
+```
+
+## Flags & Data Cleaning
+
+**TODO: Document issues**
+- [ ] Race coding break?
+- [ ] Income top-code jumps?
+- [ ] Survey weight variable: is this ASEC or basic monthly?
+- [ ] LFP / employed / self_employed: confirm coding (Yes/No? 1/0? labels?)
+- [ ] Age: is it numeric stored as string? Any "Under 1" type codes?
+
+```# Convert types as needed
+# df["age_num"] = ...
+# df["lfp_bin"] = ...
+```
+
+---
+
+# Context
+
+The file cps women lfp.csv1 (also available as a .dta file) contains individual-level data
+from the U.S. Current Population Survey since 1994. The data set includes information
+on demographics and labor market outcomes. Please use the provided data to answer each
+question below in complete sentences. Please submit a pdf of your written responses and
+any graphs and/or tables that support your responses, as well as your code. You can use any programming language of your choice, though you may find the workshop more beneficial if you use R or STATA.
+
+# Part 1: Labor Force Participation
+
+*Budget: ~4 hours*
+
+## Q1: Overall Trends in Female LFP Since 1994
+
+How has female labor force participation evolved since 1994? Please provide graphs
+and/or tables to support your answer. 
+
+**Approach:** Compute weighted annual LFP rates for all women, plot the time series,
+and narrate key inflection points (late-1990s plateau, post-2000 decline, COVID
+shock, recovery).
+
+```{python}
+# TODO: weighted LFP rate by year
+
+```
+
+**Discussion:**
+
+*[Interpret the trend. Note key periods: 1994-2000 rise, 2000-2015 gradual
+decline, COVID drop, post-COVID recovery. Contextualize briefly.]*
+
+
+## Q2: Heterogeneity in LFP Changes (Women > 25)
+
+Among women older than 25, which groups (race, age, income percentile, etc.) of
+people had the biggest changes in labor force participation since 1994? Please provide
+at least three graphs and/or tables to support your answer.
+
+**Approach:** Compute weighted LFP by year × group for at least three dimensions
+(race, age bin, income quantile). Show both levels and changes.
+
+### By Race
+
+```{python}
+# TODO: weighted LFP by year × race, women > 25
+```
+
+### By Age Group
+
+```{python}
+# TODO: define meaningful age bins (25-34, 35-44, 45-54, 55-64, 65+)
+# weighted LFP by year × age bin
+```
+
+### By Income Quantile
+
+```{python}
+# TODO: weighted LFP by year × income_quantiles or wageinc_quantiles
+# NOTE: Be careful — income quantile is endogenous to LFP (non-participants
+# have low/no income). Consider using household or lagged measures if available,
+# or flag this limitation explicitly.
+```
+
+**Discussion:**
+
+*[Which groups changed most? Is the story about convergence (gaps closing)
+or divergence? Any group that bucks the overall trend?]*
+
+
+## Q3: Trends in Wages, Social Insurance, and Education (Women > 25)
+Use the data to examine trends among women older than 25 for each of the following
+factors from 1994 to 2024. 
+### (a) Wage and Salary Income
+
+```{python}
+# TODO: weighted median/mean wage income by year, women > 25
+# Consider: inflation adjustment? The task doesn't mention it, but noting
+# nominal vs. real is a sign of research awareness.
+```
+
+### (b) Social Insurance Income
+
+```{python}
+# TODO: weighted mean/median incss by year, women > 25
+# Also: share receiving any social insurance > 0
+```
+
+### (c) Education Attainment
+
+```{python}
+# TODO: share in each education category by year, women > 25
+# Especially: share with bachelor's+ over time
+```
+
+**Discussion:**
+
+Based on these trends, what factors could be driving the patterns you found in Ques-
+tions 1 and 2?
+
+*[Connect these trends to Q1 and Q2. Rising education → higher LFP for
+college-educated women. Social insurance expansions (EITC, ACA?) may affect
+participation incentives. Wage trends and the gender wage gap.]*
+
+
+## Q4: Steepest Year-over-Year Increase in Female LFP
+
+Between 1994 and 2024, which year had the steepest increase in female labor force
+participation relative to the previous year? What factors do you think are driving
+this pattern? Support your answers by using the data, referencing major events that
+happened around this time period, and/or citing previous studies.
+
+**Approach:** Compute first differences in the annual weighted LFP series.
+Identify the maximum. Investigate drivers.
+
+```{python}
+# TODO: lfp_rate.diff() — find the argmax
+# IMPORTANT: verify whether "year" in this data = survey year or reference
+# year. CPS ASEC is conducted in March but income refers to prior year.
+# If the LFP variable is based on current status, year = survey year.
+```
+
+**Discussion:**
+
+*[Most likely candidate: 2020→2021 COVID recovery. Discuss: pandemic-related
+exits in 2020, stimulus/reopening in 2021, industry composition of recovery.
+Cite relevant literature if possible (e.g., Albanesi & Kim 2021 on women
+and COVID recession). If it's a different year, explain why.]*
+
+
+## Q5: LFP by College Education
+
+How has labor force participation for college-educated and not college-educated women
+evolved since 1994? Please provide graphs and/or tables to support your answer. 
+
+```{python}
+# TODO: weighted LFP by year × college (Yes/No), all women
+# Two-line plot: college-educated vs. not
+```
+
+**Discussion:**
+
+*[Describe the gap. Has it widened or narrowed? How did COVID differentially
+affect each group?]*
+
+
+## Q6: Alternative LFP Measure (Excluding Self-Employed)
+
+Create an alternative measure of labor force participation that excludes individuals
+from the labor force if they are self-employed in their main job (lfp = 0 if self-employed
+in main job). Using the new measure, describe how labor force participation for college-
+educated and not college-educated women has evolved since 1994. Please provide
+graphs and/or tables to support your answer.
+
+```{python}
+# TODO: construct lfp_alt
+# lfp_alt = 1 if (lfp == "Yes" AND self_employed != "Yes"), else 0
+# Verify: what share of LFP participants are self-employed? Does this
+# vary by education?
+```
+
+```{python}
+# TODO: plot lfp_alt by year × college, same structure as Q5
+```
+
+**Discussion:**
+
+*[Describe how the new measure differs from the standard one.]*
+
+
+## Q7: Comparing the Two LFP Measures
+
+How does our labor market analysis change when we use the new measure? Which
+measure do you prefer? Explain
+
+```{python}
+# TODO: overlay both measures (standard vs. alt) by college group
+# Possibly a 2x1 or overlaid plot
+```
+
+**Discussion:**
+
+*[How does excluding self-employed change the story? Which measure do you
+prefer and why? Consider: self-employment as a form of labor market
+flexibility vs. necessity. The "correct" answer depends on your research
+question — e.g., if studying employer-provided benefits, excluding
+self-employed makes sense.]*
+
+---
+
+# Part 2: Telework
+
+*Budget: ~2 hours*
+
+## Q1: Outcomes by Telework Status (2020–2024)
+
+Since the rise of telework in 2020, how have wages, employment, and labor force par-
+ticipation changed for women who had telework from 2020-2024 and women who did
+not? Please provide at least three graphs and/or tables to support your answer. 
+
+**Approach:** Define a telework indicator from the relevant variable(s). Compute
+weighted outcomes by year × telework status.
+
+```{python}
+# TODO: identify the right telework variable (covid_telework? telework_now?)
+# May differ by year. Check availability.
+```
+
+### Wages by Telework Status
+
+```{python}
+# TODO
+```
+
+### Employment by Telework Status
+
+```{python}
+# TODO
+```
+
+### LFP by Telework Status
+
+```{python}
+# TODO
+```
+
+**Discussion:**
+
+*[Teleworkers likely have higher wages (selection into telework-capable jobs).
+Be explicit about selection: we are NOT estimating a causal effect of
+telework. These are descriptive comparisons of groups that differ on many
+observables.]*
+
+
+## Q2: Who Teleworked During the Pandemic? (Women > 25, 2021)
+
+For which groups of women older than 25 was telework due to the pandemic most
+common in 2021? Based on these patterns, what can you infer about the relationship
+between economic well-being and the ability to telework between 2021? Please provide
+at least three graphs and/or tables to support your answer.
+
+```{python}
+# TODO: telework rates by race, education, age, income — for 2021, women > 25
+# At least three cuts
+```
+
+**Discussion:**
+
+*[Telework access is strongly correlated with education, occupation, and
+income. This means the "telework shock" was not random — it
+disproportionately benefited already-advantaged workers. Discuss implications
+for inequality.]*
+
+
+## Q3: Counterfactual — What If Telework Wasn't an Option?
+
+Predict what trends in wages, employment, and labor force participation for college-
+educated women from 2020 to 2024 would have looked like if telework was not an
+option. What does this tell you about the economic impacts of telework during the
+COVID-19 pandemic? Please support your answer with graphs and/or tables. 
+
+**Approach:** Use the 2008–2009 recession as a comparison episode (similar GDP
+shock, no telework). Estimate pre-recession trends, compute the recession impact
+for college-educated women in 2008–2010, and apply a similar proportional shock
+to the 2020 baseline. The difference between this counterfactual and the actual
+2020–2024 path is the implied telework effect.
+
+```{python}
+# TODO: Strategy options:
+# 1. Simple: compute 2008-2009 recession drop for college women, apply same
+#    proportional drop to 2020 baseline
+# 2. More sophisticated: fit a pre-2020 trend (e.g., 2010-2019 linear trend),
+#    extrapolate, and compare to actuals
+# 3. Most ambitious: use non-college women as a control group (DiD logic)
+#
+# Pick one that's feasible in the time budget and defensible.
+```
+
+```{python}
+# TODO: plot actuals vs. counterfactual, 2018-2024
+```
+
+**Discussion:**
+
+*[What does the gap tell us about telework's role in buffering the COVID
+recession for college-educated women? Be honest about limitations:
+the 2008 and 2020 recessions differed in many ways beyond telework
+(fiscal response, sectoral composition, duration). This is suggestive,
+not causal.]*
+
+---
+
+# Summary & Limitations
+
+*[Brief recap of key findings. Note limitations: CPS is repeated cross-section
+(no panel tracking of individuals), income variables are top-coded, telework
+measures only available from 2020, self-reported outcomes, selection issues
+in telework comparisons.]*
+
+---
+
