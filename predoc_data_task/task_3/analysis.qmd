@@ -27,6 +27,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import statsmodels.formula.api as smf
+import pyfixest as pf
 
 pd.set_option("display.max_columns", 30)
 pd.set_option("display.float_format", "{:.2f}".format)
