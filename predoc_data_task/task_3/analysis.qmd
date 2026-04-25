@@ -31,6 +31,7 @@ import pyfixest as pf
 
 pd.set_option("display.max_columns", 30)
 pd.set_option("display.float_format", "{:.2f}".format)
+sns.set_theme(style='whitegrid', palette='colorblind')
 ```
 
 ## Data Ingestion and Loading
@@ -52,7 +53,7 @@ df.head(10)
 ## Variable Inventory
 
 ```{python}
-for col in df.select_dtypes(include="object").columns:
+for col in df.select_dtypes(include="str").columns:
     print(df[col].value_counts(dropna=False))
 ```
 
@@ -117,11 +118,8 @@ for col in telework_cols:
 
 # Context
 
-The file cps women lfp.csv1 (also available as a .dta file) contains individual-level data
-from the U.S. Current Population Survey since 1994. The data set includes information
-on demographics and labor market outcomes. Please use the provided data to answer each
-question below in complete sentences. Please submit a pdf of your written responses and
-any graphs and/or tables that support your responses, as well as your code. You can use any programming language of your choice, though you may find the workshop more beneficial if you use R or STATA.
+The file cps women lfp.csv1 (also available as a .dta file) contains individual-level data from the U.S. Current Population Survey since 1994. The data set includes information on demographics and labor market outcomes. Please use the provided data to answer each
+question below in complete sentences. Please submit a pdf of your written responses and any graphs and/or tables that support your responses, as well as your code. You can use any programming language of your choice, though you may find the workshop more beneficial if you use R or STATA.
 
 # Part 1: Labor Force Participation
 
@@ -129,29 +127,99 @@ any graphs and/or tables that support your responses, as well as your code. You 
 
 ## Q1: Overall Trends in Female LFP Since 1994
 
-How has female labor force participation evolved since 1994? Please provide graphs
-and/or tables to support your answer. 
+How has female labor force participation evolved since 1994? Please provide graphs and/or tables to support your answer. 
 
-**Approach:** Compute weighted annual LFP rates for all women, plot the time series,
-and narrate key inflection points (late-1990s plateau, post-2000 decline, COVID
-shock, recovery).
+**Approach:** Compute weighted annual LFP rates for all women, plot the time series, and narrate key inflection points (late-1990s plateau, post-2000 decline, COVID shock, recovery).
+
+#### Global setting for colorblind friendly plots 
+```{python}
+# color blind friendly theme for all plots
+sns.set_theme(style='whitegrid', palette='colorblind')
+```
+
+#### Helper function 
 
 ```{python}
-# TODO: weighted LFP rate by year
+# helper function for applying weights and weighted means
+def weighted_mean(data, value_col, weight_col):
+    valid = data[[value_col, weight_col]].dropna()
 
+    if valid.empty:
+        return np.nan
+
+    return np.average(valid[value_col], weights=valid[weight_col])
+
+def wmean(values, weights):
+    mask = values.notna() & weights.notna()
+    if mask.sum() == 0:
+        return np.nan
+    return np.average(values[mask], weights=weights[mask])
+```
+
+#### Subset and group by year 
+```{python}
+df_women = df.loc[df['sex'] == 'Female', ['year', 'lfp', 'wgt']].copy()
+df_women['lfp_bin'] = (df_women['lfp'] == 'In labor force').astype(int)
+
+# weight LFP rate by year
+lfp_by_year = (
+    df_women.groupby('year')
+    .apply(lambda g: wmean(g['lfp_bin'], g['wgt']))
+    .rename('lfp_rate')
+)
+```
+
+Note: LFP-missing observations constitutes <1% of the female sample; results are insensitive to these.
+
+#### Plotting
+
+```{python}
+import matplotlib.ticker as mticker
+fig, ax = plt.subplots(figsize=(9, 5.5))
+
+ax.plot(lfp_by_year.index, lfp_by_year.values,
+        marker='o', markersize=4, linewidth=1.8,
+        color='#0127b2')
+
+# recession shading
+ax.axvspan(2007, 2009, alpha=0.12, color='gray', zorder=0)
+ax.axvspan(2020, 2020.5, alpha=0.12, color='gray', zorder=0)
+
+# Annotations with labels
+peak_year = lfp_by_year.idxmax()
+peak_val = lfp_by_year.max()
+ax.annotate(f'Peak: {peak_val:.1%}\n({peak_year})',
+            xy=(peak_year, peak_val),
+            xytext=(peak_year - 3, peak_val + 0.005),
+            fontsize=9, color='gray',
+            arrowprops=dict(arrowstyle='->', color='gray', alpha=0.6))
+
+covid_val = lfp_by_year.loc[2020]
+ax.annotate('COVID-19',
+            xy=(2020, covid_val),
+            xytext=(2016, covid_val - 0.015),
+            fontsize=9, color='gray',
+            arrowprops=dict(arrowstyle='->', color='gray', alpha=0.6))
+
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Year')
+ax.set_ylabel('Labor Force Participation Rate')
+ax.set_title('Female Labor Force Participation, 1994–2024', loc='left',
+             fontsize=12, fontweight='bold')
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.show()
 ```
 
 **Discussion:**
-
-*[Interpret the trend. Note key periods: 1994-2000 rise, 2000-2015 gradual
-decline, COVID drop, post-COVID recovery. Contextualize briefly.]*
 
 
 ## Q2: Heterogeneity in LFP Changes (Women > 25)
 
 Among women older than 25, which groups (race, age, income percentile, etc.) of
-people had the biggest changes in labor force participation since 1994? Please provide
-at least three graphs and/or tables to support your answer.
+people had the biggest changes in labor force participation since 1994? Please provide at least three graphs and/or tables to support your answer.
 
 **Approach:** Compute weighted LFP by year × group for at least three dimensions
 (race, age bin, income quantile). Show both levels and changes.
