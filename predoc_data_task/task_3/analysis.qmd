@@ -41,11 +41,11 @@ df.info()
 df.head(10)
 ```
 
-**Note on variables:** 
+**Note on columns:** 
 - 'education' value are open sets
 - 'college' is binary string (should be converted for memory efficiency)
-- 'age' is binned
-- significant (40%+) missing value in income columns, is the missingness structurally related? 
+- 'age' is binned, e.g. <25
+- significant (40%+) missing value in income columns, is the missingness structurally correlated to another column? 
 - 'lfp' and 'employed' can be binary flag as well
 - 90%+ missing for 'covid_*' and 'telework_*' columns
 
@@ -53,9 +53,12 @@ df.head(10)
 
 ```{python}
 for col in df.select_dtypes(include="object").columns:
-    print(f"\n{col}")
     print(df[col].value_counts(dropna=False))
 ```
+
+Note on income: CPS income data comes from the March supplement; basic monthly CPS doesn't have income
+
+Col name map: {inctot: total personal income, incss: social security income, }
 
 ## Year Coverage & Sample Size
 - Verify years 1994-2024, check for sample size
@@ -72,12 +75,19 @@ plt.show()
 print(df[["inctot", "incss", "income", "wgt"]].describe())
 
 df.groupby("year")[["inctot", "incss", "income"]].apply(
-    lambda x: x.isna().mean()
-).plot(title="Share Missing by Year (Income Variables)")
-plt.ylabel("Fraction missing")
-plt.tight_layout()
-plt.show()
+    lambda x: x.isna().mean())
 ```
+
+The missingness distribution by year between income variables are the same. The fact that missingness is identical across all three income variables across years suggests these are all coming from the ASEC supplement together. So missingness is structural — non-March rows have all three missing simultaneously. 
+
+- 'wgt' is person-level weight from the CPS? 
+
+```{python}
+# wgt diagnostics to determine whether it's ASEC march data or monthly
+df.groupby(df["income"].notna())["wgt"].describe()
+```
+
+**Note:** since wgt is evenly distributed across income missing and present rows, we can infer it's from monthly data. also known as 'WTFINL'. 
 
 ## Telework Variable Availability
 
@@ -93,11 +103,10 @@ for col in telework_cols:
 ## Flags & Data Cleaning
 
 **TODO: Document issues**
-- [ ] Race coding break?
 - [ ] Income top-code jumps?
-- [ ] Survey weight variable: is this ASEC or basic monthly?
+- [x] Survey weight variable: is this ASEC or basic monthly? Monthly
 - [ ] LFP / employed / self_employed: confirm coding (Yes/No? 1/0? labels?)
-- [ ] Age: is it numeric stored as string? Any "Under 1" type codes?
+- [x] Age: is it numeric stored as string? Any "Under 1" type codes?
 
 ```# Convert types as needed
 # df["age_num"] = ...
