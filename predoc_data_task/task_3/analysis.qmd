@@ -158,7 +158,7 @@ def wmean(values, weights):
 
 #### Subset and group by year 
 ```{python}
-df_women = df.loc[df['sex'] == 'Female', ['year', 'lfp', 'wgt']].copy()
+df_women = df.loc[df['sex'] == 'Female', ['year', 'lfp', 'wgt','age','race', 'income_quantiles']].copy()
 df_women['lfp_bin'] = (df_women['lfp'] == 'In labor force').astype(int)
 
 # weight LFP rate by year
@@ -221,70 +221,296 @@ plt.show()
 Among women older than 25, which groups (race, age, income percentile, etc.) of
 people had the biggest changes in labor force participation since 1994? Please provide at least three graphs and/or tables to support your answer.
 
-**Approach:** Compute weighted LFP by year × group for at least three dimensions
-(race, age bin, income quantile). Show both levels and changes.
+Note: income quantile is partially endogenous to labor force status — non-participants tend to have lower individual income. I use income_quantiles (total income) rather than wageinc_quantiles (wage income) since the former is less mechanically tied to LFP, but causal interpretation should still be cautious.
 
 ### By Race
 
 ```{python}
-# TODO: weighted LFP by year × race, women > 25
+cols = ['year', 'lfp', 'wgt', 'race', 'age', 'income_quantiles',
+        'education', 'college', 'self_employed', 'inctot', 'incss', 'income']
+df_women = df.loc[df['sex'] == 'Female', cols].copy()
+df_women['lfp_bin'] = (df_women['lfp'] == 'In labor force').astype(int)
+
+df_w25 = df_women.loc[df_women['age'] != '< 25'].copy()
+
+# helper for weighted LFP by year × group
+def lfp_by_year_group(data, group_col):
+    return (data.groupby(['year', group_col], observed=True)
+                .apply(lambda g: wmean(g['lfp_bin'], g['wgt']))
+                .unstack(group_col))
+```
+
+*Note:* I will exclude "Native American" and "Two or more" from the race plot due to small sample sizes, which produces noisy year-to-year estimates. These groups remain in the summary table for completeness.
+
+```{python}
+race_keep = ['White', 'Black', 'Hispanic', 'Asian or Pacific Islander']
+lfp_race = lfp_by_year_group(
+    df_w25.loc[df_w25['race'].isin(race_keep)],
+    'race'
+)
+
+fig, ax = plt.subplots(figsize=(9, 5.5))
+lfp_race.plot(ax=ax, marker='o', markersize=3, linewidth=1.5)
+
+ax.axvspan(2007, 2009, alpha=0.12, color='gray', zorder=0)
+ax.axvspan(2020, 2020.5, alpha=0.12, color='gray', zorder=0)
+
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Year')
+ax.set_ylabel('Labor Force Participation Rate')
+ax.set_title('Female LFP by Race, Women 25+', loc='left',
+             fontsize=12, fontweight='bold')
+ax.legend(title='Race', frameon=False, loc='lower left')
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
 ```
 
 ### By Age Group
 
 ```{python}
-# TODO: define meaningful age bins (25-34, 35-44, 45-54, 55-64, 65+)
-# weighted LFP by year × age bin
+# Set categorical order so the legend is sorted by age
+age_order = ['25-34', '35-44', '45-54', '55-64', '65-74', '75+']
+df_w25['age'] = pd.Categorical(df_w25['age'], categories=age_order, ordered=True)
+
+lfp_age = lfp_by_year_group(df_w25, 'age')
+
+fig, ax = plt.subplots(figsize=(9, 5.5))
+lfp_age.plot(ax=ax, marker='o', markersize=3, linewidth=1.5)
+
+ax.axvspan(2007, 2009, alpha=0.12, color='gray', zorder=0)
+ax.axvspan(2020, 2020.5, alpha=0.12, color='gray', zorder=0)
+
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Year')
+ax.set_ylabel('Labor Force Participation Rate')
+ax.set_title('Female LFP by Age Group, Women 25+', loc='left',
+             fontsize=12, fontweight='bold')
+ax.legend(title='Age', frameon=False, loc='center left', bbox_to_anchor=(1, 0.5))
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
 ```
 
 ### By Income Quantile
 
 ```{python}
-# TODO: weighted LFP by year × income_quantiles or wageinc_quantiles
-# NOTE: Be careful — income quantile is endogenous to LFP (non-participants
-# have low/no income). Consider using household or lagged measures if available,
-# or flag this limitation explicitly.
+# Income quantiles only populated for ASEC rows
+income_order = ['0-19.99', '20-39.99', '40-59.99', '60-79.99', '80-100']
+df_w25_inc = df_w25.dropna(subset=['income_quantiles']).copy()
+df_w25_inc['income_quantiles'] = pd.Categorical(
+    df_w25_inc['income_quantiles'], categories=income_order, ordered=True
+)
+
+lfp_inc = lfp_by_year_group(df_w25_inc, 'income_quantiles')
+
+fig, ax = plt.subplots(figsize=(9, 5.5))
+lfp_inc.plot(ax=ax, marker='o', markersize=3, linewidth=1.5)
+
+ax.axvspan(2007, 2009, alpha=0.12, color='gray', zorder=0)
+ax.axvspan(2020, 2020.5, alpha=0.12, color='gray', zorder=0)
+
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Year')
+ax.set_ylabel('Labor Force Participation Rate')
+ax.set_title('Female LFP by Income Quintile, Women 25+', loc='left',
+             fontsize=12, fontweight='bold')
+ax.legend(title='Income Quintile', frameon=False, loc='lower left')
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
 ```
 
+```{python}
+def endpoint_change(series, start=(1994, 1995, 1996), end=(2022, 2023, 2023)):
+    return pd.Series({
+        '1994-96': series.loc[list(start)].mean(),
+        '2022-24': series.loc[list(end)].mean(),
+        'Change (pp)': (series.loc[list(end)].mean() - series.loc[list(start)].mean()) * 100
+    })
+
+summary = pd.concat([
+    lfp_race.apply(endpoint_change).T.assign(Dimension='Race'),
+    lfp_age.apply(endpoint_change).T.assign(Dimension='Age'),
+    lfp_inc.apply(endpoint_change).T.assign(Dimension='Income Quintile'),
+]).reset_index().rename(columns={'index': 'Group'})
+
+summary = summary[['Dimension', 'Group', '1994-96', '2022-23', 'Change (pp)']]
+summary
+```
 **Discussion:**
 
 *[Which groups changed most? Is the story about convergence (gaps closing)
 or divergence? Any group that bucks the overall trend?]*
 
+Race has the largest heterogeneity, of the four categories included, white female trends down slightly in LFP, where other groups seems to converge after the great recession. Since the covid-19 pandemic is still a relatively recent shock, I want to caution against over-extrapolating the pattern but it seems to be fit the same narrative. 
 
 ## Q3: Trends in Wages, Social Insurance, and Education (Women > 25)
-Use the data to examine trends among women older than 25 for each of the following
-factors from 1994 to 2024. 
+Use the data to examine trends among women older than 25 for each of the following factors from 1994 to 2024. 
 ### (a) Wage and Salary Income
 
+Note: INCTOT, INCWAGE reflect the dollar value at the time the survey was taken, not adjusted for inflation.
+
 ```{python}
-# TODO: weighted median/mean wage income by year, women > 25
-# Consider: inflation adjustment? The task doesn't mention it, but noting
-# nominal vs. real is a sign of research awareness.
+# CPI-U deflator, 2024 base — VERIFY against BLS before final submission
+cpi = {
+    1994: 39.4, 1995: 40.5, 1996: 41.7, 1997: 42.6, 1998: 43.3,
+    1999: 44.3, 2000: 45.7, 2001: 47.0, 2002: 47.8, 2003: 48.8,
+    2004: 50.1, 2005: 51.8, 2006: 53.5, 2007: 55.0, 2008: 57.1,
+    2009: 56.9, 2010: 57.8, 2011: 59.7, 2012: 60.9, 2013: 61.8,
+    2014: 62.8, 2015: 62.9, 2016: 63.7, 2017: 65.0, 2018: 66.6,
+    2019: 67.8, 2020: 68.7, 2021: 71.9, 2022: 77.7, 2023: 80.9,
+    2024: 83.5
+}
+deflator = pd.Series({y: cpi[2024]/v for y, v in cpi.items()})
+
+# Apply to ASEC subsample (income variables only populated in ASEC)
+df_w25_inc = df_w25.dropna(subset=['income']).copy()
+df_w25_inc['income_real']  = df_w25_inc['income']  * df_w25_inc['year'].map(deflator)
+df_w25_inc['incss_real']   = df_w25_inc['incss']   * df_w25_inc['year'].map(deflator)
 ```
+
+```{python}
+# quick sanity check 
+df[['year']].describe()
+df_w25.loc[df_w25['inctot'].notna(), ['inctot', 'incss', 'income']].head(20)
+
+# np.average doesn't have a weighted-median equivalent
+def wmedian(values, weights):
+    mask = values.notna() & weights.notna()
+    if mask.sum() == 0:
+        return np.nan
+    v, w = values[mask].values, weights[mask].values
+    order = np.argsort(v)
+    v, w = v[order], w[order]
+    cum = np.cumsum(w)
+    return v[np.searchsorted(cum, cum[-1] / 2)]
+```
+
+```{python}
+# Restrict to women with positive wage income (workers)
+df_w25_workers = df_w25_inc.loc[df_w25_inc['income'] > 0].copy()
+
+wage_by_year = (df_w25_workers.groupby('year')
+                .apply(lambda g: wmedian(g['income_real'], g['wgt']))
+                .rename('median_wage_real'))
+
+fig, ax = plt.subplots(figsize=(9, 5.5))
+ax.plot(wage_by_year.index, wage_by_year.values,
+        marker='o', markersize=4, linewidth=1.8, color='#0127b2')
+
+ax.axvspan(2007, 2009, alpha=0.12, color='gray', zorder=0)
+ax.axvspan(2020, 2020.5, alpha=0.12, color='gray', zorder=0)
+
+ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'${x/1000:.0f}K'))
+ax.set_xlabel('Year')
+ax.set_ylabel('Median Wage and Salary Income (2024 dollars)')
+ax.set_title('Female Wage and Salary Income, Workers Age 25+', loc='left',
+             fontsize=12, fontweight='bold')
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+```
+
+Note: I report median wage and salary income conditional on positive earnings (workers only). This isolates earnings dynamics from changes in labor force composition.
 
 ### (b) Social Insurance Income
 
+Note: I use incss, which captures Social Security income; broader social insurance categories such as SSI are not separately available in this extract.
+
 ```{python}
-# TODO: weighted mean/median incss by year, women > 25
-# Also: share receiving any social insurance > 0
+# Extensive margin: share with any SS income > 0
+df_w25_inc['has_ss'] = (df_w25_inc['incss'] > 0).astype(int)
+ss_share = (df_w25_inc.groupby('year')
+            .apply(lambda g: wmean(g['has_ss'], g['wgt']))
+            .rename('share_with_ss'))
+
+# Intensive margin: median SS income among recipients (real)
+ss_recipients = df_w25_inc.loc[df_w25_inc['incss'] > 0]
+ss_median = (ss_recipients.groupby('year')
+             .apply(lambda g: wmedian(g['incss_real'], g['wgt']))
+             .rename('median_ss_real'))
+
+fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+# Panel 1: extensive margin
+axes[0].plot(ss_share.index, ss_share.values,
+             marker='o', markersize=4, linewidth=1.8, color='#0127b2')
+axes[0].axvspan(2007, 2009, alpha=0.12, color='gray', zorder=0)
+axes[0].axvspan(2020, 2020.5, alpha=0.12, color='gray', zorder=0)
+axes[0].yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+axes[0].set_xlabel('Year')
+axes[0].set_ylabel('Share Receiving Social Security')
+axes[0].set_title('Extensive Margin', loc='left', fontsize=11, fontweight='bold')
+axes[0].spines[['top', 'right']].set_visible(False)
+axes[0].grid(True, alpha=0.3)
+
+# Panel 2: intensive margin
+axes[1].plot(ss_median.index, ss_median.values,
+             marker='o', markersize=4, linewidth=1.8, color='#DE8F05')
+axes[1].axvspan(2007, 2009, alpha=0.12, color='gray', zorder=0)
+axes[1].axvspan(2020, 2020.5, alpha=0.12, color='gray', zorder=0)
+axes[1].yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'${x/1000:.0f}K'))
+axes[1].set_xlabel('Year')
+axes[1].set_ylabel('Median SS Income, Recipients (2024 dollars)')
+axes[1].set_title('Intensive Margin', loc='left', fontsize=11, fontweight='bold')
+axes[1].spines[['top', 'right']].set_visible(False)
+axes[1].grid(True, alpha=0.3)
+
+fig.suptitle('Social Security Income, Women 25+', fontsize=13, fontweight='bold',
+             x=0.02, ha='left', y=1.02)
+plt.tight_layout()
+plt.show()
 ```
 
 ### (c) Education Attainment
 
 ```{python}
-# TODO: share in each education category by year, women > 25
-# Especially: share with bachelor's+ over time
+edu_order = ["< HS Diploma", "HS Diploma", "Some college, no degree",
+             "Associate's Degree", "Bachelor's Degree", "Master's or Higher"]
+
+df_w25['education'] = pd.Categorical(df_w25['education'],
+                                      categories=edu_order, ordered=True)
+
+# Weighted share in each education category by year
+def edu_share_by_year(data):
+    out = (data.groupby(['year', 'education'], observed=True)
+              .apply(lambda g: g['wgt'].sum())
+              .unstack('education', fill_value=0))
+    return out.div(out.sum(axis=1), axis=0)
+
+edu_shares = edu_share_by_year(df_w25)
+
+fig, ax = plt.subplots(figsize=(9, 5.5))
+edu_shares.plot.area(ax=ax, alpha=0.8, linewidth=0)
+
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Year')
+ax.set_ylabel('Share of Women 25+')
+ax.set_title('Education Attainment, Women 25+', loc='left',
+             fontsize=12, fontweight='bold')
+ax.set_ylim(0, 1)
+ax.set_xlim(edu_shares.index.min(), edu_shares.index.max())
+ax.legend(title='Education', frameon=False, loc='center left',
+          bbox_to_anchor=(1, 0.5), reverse=True)
+ax.spines[['top', 'right']].set_visible(False)
+plt.tight_layout()
+plt.show()
 ```
 
 **Discussion:**
 
-Based on these trends, what factors could be driving the patterns you found in Ques-
-tions 1 and 2?
+Based on these trends, what factors could be driving the patterns you found in Questions 1 and 2?
 
 *[Connect these trends to Q1 and Q2. Rising education → higher LFP for
 college-educated women. Social insurance expansions (EITC, ACA?) may affect
 participation incentives. Wage trends and the gender wage gap.]*
+
+The pattern to highlight here is how female 
 
 
 ## Q4: Steepest Year-over-Year Increase in Female LFP
