@@ -158,7 +158,7 @@ def wmean(values, weights):
 
 #### Subset and group by year 
 ```{python}
-df_women = df.loc[df['sex'] == 'Female', ['year', 'lfp', 'wgt','age','race', 'income_quantiles']].copy()
+df_women = df.loc[df['sex'] == 'Female'].copy()
 df_women['lfp_bin'] = (df_women['lfp'] == 'In labor force').astype(int)
 
 # weight LFP rate by year
@@ -648,108 +648,256 @@ The research question should also dictate my answer to the question: if our rese
 
 ## Q1: Outcomes by Telework Status (2020–2024)
 
-Since the rise of telework in 2020, how have wages, employment, and labor force par-
-ticipation changed for women who had telework from 2020-2024 and women who did
-not? Please provide at least three graphs and/or tables to support your answer. 
+Since the rise of telework in 2020, how have wages, employment, and labor force participation changed for women who had telework from 2020-2024 and women who did not? Please provide at least three graphs and/or tables to support your answer. 
 
-**Approach:** Define a telework indicator from the relevant variable(s). Compute
-weighted outcomes by year × telework status.
+**Approach:** I'm using 'telework_now': which is the number of women who had teleworked in the past week, with 84K non-null. 
+
 
 ```{python}
-# TODO: identify the right telework variable (covid_telework? telework_now?)
-# May differ by year. Check availability.
+for col in ['telework_now', 'covid_telework', 'telework_before']:
+    print(f"\n{col} by year:")
+    print(df.groupby('year')[col].apply(lambda x: x.notna().mean()).round(3))
+```
+
+```{python}
+# Subset: women in years where telework is observed
+df_tw = df_women.loc[df_women['telework_now'].notna()].copy()
+df_tw['teleworked'] = (df_tw['telework_now'] == 'Had telework in the past week').astype(int)
+df_tw['employed_bin'] = (df_tw['employed'] == 'Employed').astype(int)
+
+print(df_tw.groupby('year')['teleworked'].agg(['mean', 'size']))
 ```
 
 ### Wages by Telework Status
 
 ```{python}
-# TODO
+print(f"df_tw rows: {len(df_tw)}")
+print(f"df_tw_inc rows: {len(df_tw_inc)}")
+print(f"income > 0 count: {(df_tw_inc['income'] > 0).sum()}")
+print(df_tw.groupby('year')['income'].apply(lambda x: x.notna().sum()))
 ```
+
+Note: Wage comparisons by telework status are not feasible in this extract: telework variables (telework_now) are populated in 2023–2024 basic monthly CPS, while income variables come from the ASEC supplement, with no overlapping observations. The employment and LFP comparisons below use the basic monthly sample where telework is observed. 
 
 ### Employment by Telework Status
 
 ```{python}
-# TODO
+emp_tw = (df_tw.groupby(['year', 'teleworked'])
+          .apply(lambda g: wmean(g['employed_bin'], g['wgt']))
+          .unstack('teleworked')
+          .rename(columns={0: 'No telework', 1: 'Telework'}))
+
+fig, ax = plt.subplots(figsize=(9, 5))
+emp_tw.plot(ax=ax, marker='o', markersize=5, linewidth=1.8)
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Year')
+ax.set_ylabel('Employment Rate')
+ax.set_title('Employment Rate by Telework Status', loc='left', fontsize=12, fontweight='bold')
+ax.legend(frameon=False)
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
 ```
 
 ### LFP by Telework Status
 
 ```{python}
-# TODO
+lfp_tw = (df_tw.groupby(['year', 'teleworked'])
+          .apply(lambda g: wmean(g['lfp_bin'], g['wgt']))
+          .unstack('teleworked')
+          .rename(columns={0: 'No telework', 1: 'Telework'}))
+
+fig, ax = plt.subplots(figsize=(9, 5))
+lfp_tw.plot(ax=ax, marker='o', markersize=5, linewidth=1.8)
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Year')
+ax.set_ylabel('LFP Rate')
+ax.set_title('LFP Rate by Telework Status', loc='left', fontsize=12, fontweight='bold')
+ax.legend(frameon=False)
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
 ```
 
-**Discussion:**
-
-*[Teleworkers likely have higher wages (selection into telework-capable jobs).
-Be explicit about selection: we are NOT estimating a causal effect of
-telework. These are descriptive comparisons of groups that differ on many
-observables.]*
+**Discussion:** Teleworkers have higher LFP (selection into telework-capable jobs, since those are likely all office-jobs). Teleworkers have higher employment and LFP rates than non-teleworkers in 2023–2024. These gaps are descriptive: telework availability is correlated with occupation, education, and industry, so we are comparing groups that differ on many observables. The data are consistent with telework being a privilege of higher-attachment, higher-skill workers rather than a treatment with a clean causal effect on labor market outcomes.
 
 
 ## Q2: Who Teleworked During the Pandemic? (Women > 25, 2021)
 
 For which groups of women older than 25 was telework due to the pandemic most
-common in 2021? Based on these patterns, what can you infer about the relationship
-between economic well-being and the ability to telework between 2021? Please provide
-at least three graphs and/or tables to support your answer.
+common in 2021? Based on these patterns, what can you infer about the relationship between economic well-being and the ability to telework between 2021? Please provide at least three graphs and/or tables to support your answer.
+
+Note from BLS website: "BLS added new questions to the Current Population Survey (CPS) starting in October 2022 that focus on telework or work at home for pay."
 
 ```{python}
-# TODO: telework rates by race, education, age, income — for 2021, women > 25
-# At least three cuts
+# Subset: women 25+, 2021, with covid_telework observed
+df_2021 = df.loc[
+    (df['sex'] == 'Female') 
+    & (df['age'] != '< 25') 
+    & (df['year'] == 2021) 
+    & (df['covid_telework'].notna())
+].copy()
+df_2021['tw_pandemic'] = (df_2021['covid_telework'] == 
+                          'Telework from 2021-2022 due to COVID').astype(int)
+print(f"N: {len(df_2021)}")
+```
+
+### Telework by Race
+
+```{python}
+race_keep = ['White', 'Black', 'Hispanic', 'Asian or Pacific Islander']
+tw_race = (df_2021.loc[df_2021['race'].isin(race_keep)]
+           .groupby('race', observed=True)
+           .apply(lambda g: wmean(g['tw_pandemic'], g['wgt']))
+           .sort_values(ascending=False))
+
+fig, ax = plt.subplots(figsize=(8, 4.5))
+tw_race.plot(kind='barh', ax=ax, color='#0122b2')
+ax.xaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Pandemic Telework Rate')
+ax.set_ylabel('')
+ax.set_title('Pandemic Telework Rate by Race, Women 25+ (2021)',
+             loc='left', fontsize=12, fontweight='bold')
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3, axis='x')
+plt.tight_layout()
+plt.show()
+```
+
+
+### Telework by Education
+
+```{python}
+tw_college = (df_2021.groupby('college', observed=True)
+              .apply(lambda g: wmean(g['tw_pandemic'], g['wgt']))
+              .sort_values(ascending=False))
+
+fig, ax = plt.subplots(figsize=(8, 3.5))
+tw_college.plot(kind='barh', ax=ax, color='#b605de')
+ax.xaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Pandemic Telework Rate')
+ax.set_ylabel('')
+ax.set_title('Pandemic Telework Rate by College Education, Women 25+ (2021)',
+             loc='left', fontsize=12, fontweight='bold')
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3, axis='x')
+plt.tight_layout()
+plt.show()
 ```
 
 **Discussion:**
-
-*[Telework access is strongly correlated with education, occupation, and
-income. This means the "telework shock" was not random — it
-disproportionately benefited already-advantaged workers. Discuss implications
-for inequality.]*
-
 
 ## Q3: Counterfactual — What If Telework Wasn't an Option?
 
-Predict what trends in wages, employment, and labor force participation for college-
-educated women from 2020 to 2024 would have looked like if telework was not an
-option. What does this tell you about the economic impacts of telework during the
-COVID-19 pandemic? Please support your answer with graphs and/or tables. 
+Predict what trends in wages, employment, and labor force participation for college-educated women from 2020 to 2024 would have looked like if telework was not an option. What does this tell you about the economic impacts of telework during the COVID-19 pandemic? Please support your answer with graphs and/or tables. 
 
-**Approach:** Use the 2008–2009 recession as a comparison episode (similar GDP
-shock, no telework). Estimate pre-recession trends, compute the recession impact
-for college-educated women in 2008–2010, and apply a similar proportional shock
-to the 2020 baseline. The difference between this counterfactual and the actual
-2020–2024 path is the implied telework effect.
+**Approach:** Y = labor market outcome, T = telework, use non-college educated women as counterfactual in 2x2 DiD and 2010-2019 as a pre-treatment period. 
+$$τ^=(Ycollege, post​−Ycollege, pre​)−(Ynon, post​−Ynon, pre​)$$
+
+Assumption: Paraellel Trend, need to inspect visually at least. 
 
 ```{python}
-# TODO: Strategy options:
-# 1. Simple: compute 2008-2009 recession drop for college women, apply same
-#    proportional drop to 2020 baseline
-# 2. More sophisticated: fit a pre-2020 trend (e.g., 2010-2019 linear trend),
-#    extrapolate, and compare to actuals
-# 3. Most ambitious: use non-college women as a control group (DiD logic)
-#
-# Pick one that's feasible in the time budget and defensible.
+cols_needed = ['year', 'sex', 'age', 'lfp', 'employed', 'college', 
+               'self_employed', 'race', 'wgt', 'covid_telework', 'telework_now']
+
+df_women = df.loc[df['sex'] == 'Female', cols_needed].copy()
+df_women['lfp_bin'] = (df_women['lfp'] == 'In labor force').astype(int)
+df_women['employed_bin'] = (df_women['employed'] == 'Employed').astype(int)
+
+df_w25 = df_women.loc[df_women['age'] != '< 25'].copy()
 ```
 
 ```{python}
-# TODO: plot actuals vs. counterfactual, 2018-2024
+# Build employment series by year × college, women 25+
+emp_college = (df_w25.groupby(['year', 'college'], observed=True)
+               .apply(lambda g: wmean(g['employed_bin'], g['wgt']))
+               .unstack('college'))
+
+# Rebuild LFP series too if not in scope
+lfp_college = (df_w25.groupby(['year', 'college'], observed=True)
+               .apply(lambda g: wmean(g['lfp_bin'], g['wgt']))
+               .unstack('college'))
+
+def did_counterfactual(series_wide, treated_col, control_col, base_year=2019, 
+                       post_start=2020, post_end=2024):
+    """DiD counterfactual: apply control's post-base deviations to treated baseline."""
+    treated_base = series_wide.loc[base_year, treated_col]
+    control_base = series_wide.loc[base_year, control_col]
+    post_years = range(post_start, post_end + 1)
+    return pd.Series(
+        {y: treated_base + (series_wide.loc[y, control_col] - control_base) 
+         for y in post_years},
+        name='counterfactual'
+    )
+
+cf_emp = did_counterfactual(emp_college, 'Has college degree', 'No college degree')
+cf_lfp = did_counterfactual(lfp_college, 'Has college degree', 'No college degree')
+
+def plot_did(series_wide, cf, ylabel, title, treated_col='Has college degree',
+             control_col='No college degree'):
+    fig, ax = plt.subplots(figsize=(9, 5.5))
+    
+    # Actuals — both groups, full range
+    full = series_wide.loc[2010:2024]
+    ax.plot(full.index, full[treated_col], marker='o', markersize=4, 
+            linewidth=1.8, color='#6801b2', label='College (actual)')
+    ax.plot(full.index, full[control_col], marker='s', markersize=4, 
+            linewidth=1.8, color='#deba05', label='Non-college (actual)')
+    
+    # Counterfactual: anchor at 2019 then follow control deviations
+    cf_full = pd.concat([pd.Series({2019: series_wide.loc[2019, treated_col]}), cf])
+    ax.plot(cf_full.index, cf_full.values, marker='D', markersize=4, 
+            linewidth=1.8, linestyle='--', color='#ea241d', 
+            label='College (counterfactual)')
+    
+    # Shade the gap
+    actual_post = series_wide.loc[2020:2024, treated_col]
+    ax.fill_between(actual_post.index, actual_post.values, cf.values,
+                    alpha=0.15, color='#ce4f4f', label='Implied differential effect')
+    
+    ax.axvline(2020, color='gray', linestyle=':', alpha=0.6, linewidth=1)
+    
+    ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+    ax.set_xlabel('Year')
+    ax.set_ylabel(ylabel)
+    ax.set_title(title, loc='left', fontsize=12, fontweight='bold')
+    ax.legend(frameon=False, loc='lower left')
+    ax.spines[['top', 'right']].set_visible(False)
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+plot_did(emp_college, cf_emp, 'Employment Rate',
+         'Employment: Actual vs. DiD Counterfactual, College Women 25+')
+
+plot_did(lfp_college, cf_lfp, 'LFP Rate',
+         'LFP: Actual vs. DiD Counterfactual, College Women 25+')
+```
+
+```{python}
+def did_summary(series_wide, cf, treated_col='Has college degree'):
+    actual = series_wide.loc[2020:2024, treated_col]
+    return pd.DataFrame({
+        'Actual': actual,
+        'Counterfactual': cf,
+        'Gap (pp)': (actual - cf) * 100
+    })
+
+print("Employment:")
+print(did_summary(emp_college, cf_emp).round(3))
+print("\nLFP:")
+print(did_summary(lfp_college, cf_lfp).round(3))
 ```
 
 **Discussion:**
+The gaps are tiny (under 1 percentage point) and they go the wrong direction in 2020 and 2024 — college women fared worse than the counterfactual implies, not better. Three plausible interpretations:
 
-*[What does the gap tell us about telework's role in buffering the COVID
-recession for college-educated women? Be honest about limitations:
-the 2008 and 2020 recessions differed in many ways beyond telework
-(fiscal response, sectoral composition, duration). This is suggestive,
-not causal.]*
+1. Non-college women are a poor control group. They were hit much harder by COVID (service-sector job losses), so applying their trajectory as the counterfactual produces a low bar that college women easily clear. The DiD estimate is the differential effect — college relative to non-college — not the level effect of telework. If both groups benefited from telework but non-college benefited less, the DiD estimate would be small.
 
----
+2. College-educated women's LFP/employment was already high and stable (~70%), with limited room to fall. The COVID shock fell more on hours worked, wages, and informal labor than on the binary employment-rate measure for this group.
 
-# Summary & Limitations
+3. Parallel trends violation in the wrong direction. If college women's pre-2020 LFP was decelerating relative to non-college (look at 2018-2019), the counterfactual extrapolation is biased. 
 
-*[Brief recap of key findings. Note limitations: CPS is repeated cross-section
-(no panel tracking of individuals), income variables are top-coded, telework
-measures only available from 2020, self-reported outcomes, selection issues
-in telework comparisons.]*
-
----
-
+4. However, the counter factual post-covid has lower employment than the actual data. It is possible that telework affected the employment rebound rate after the pandemic among college-educated groups. 
