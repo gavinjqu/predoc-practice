@@ -36,10 +36,18 @@ pd.set_option("display.float_format", "{:.2f}".format)
 ## Data Ingestion and Loading
 
 ```{python}
-df = pd.read_csv("./data/cps_women_lfp.csv")
+df = pd.read_csv("./data/cps_women_lfp.csv", low_memory=False)
 df.info()
 df.head(10)
 ```
+
+**Note on variables:** 
+- 'education' value are open sets
+- 'college' is binary string (should be converted for memory efficiency)
+- 'age' is binned
+- significant (40%+) missing value in income columns, is the missingness structurally related? 
+- 'lfp' and 'employed' can be binary flag as well
+- 90%+ missing for 'covid_*' and 'telework_*' columns
 
 ## Variable Inventory
 
