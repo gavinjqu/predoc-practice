@@ -506,63 +506,87 @@ plt.show()
 
 Based on these trends, what factors could be driving the patterns you found in Questions 1 and 2?
 
-*[Connect these trends to Q1 and Q2. Rising education → higher LFP for
-college-educated women. Social insurance expansions (EITC, ACA?) may affect
-participation incentives. Wage trends and the gender wage gap.]*
-
-The pattern to highlight here is how female 
-
+Discussion: The pattern to highlight here is how female wage and income have consistently been trending down after the great recession, bigger drops tend to happen after major systematic shocks. I decomposed total social income change to the following: extensive margin increase reflect the growing number of women near retirement age or retired, where decreasing intensive margin imply the median amount is decreasing. 
+In terms of education amongst women 25+, HS diploma trends down slightly, which can be explained by the increase in those with Bachelor's degree and up. 
+Extensive Margin: total share of employement taken into account.
+Intensive Margin: Only counts those receiving social security. 
 
 ## Q4: Steepest Year-over-Year Increase in Female LFP
 
-Between 1994 and 2024, which year had the steepest increase in female labor force
-participation relative to the previous year? What factors do you think are driving
-this pattern? Support your answers by using the data, referencing major events that
-happened around this time period, and/or citing previous studies.
-
-**Approach:** Compute first differences in the annual weighted LFP series.
-Identify the maximum. Investigate drivers.
+Between 1994 and 2024, which year had the steepest increase in female labor force participation relative to the previous year? What factors do you think are driving this pattern? Support your answers by using the data, referencing major events that happened around this time period, and/or citing previous studies.
 
 ```{python}
-# TODO: lfp_rate.diff() — find the argmax
-# IMPORTANT: verify whether "year" in this data = survey year or reference
-# year. CPS ASEC is conducted in March but income refers to prior year.
-# If the LFP variable is based on current status, year = survey year.
+yoy_change = lfp_by_year.diff()
+peak_year = yoy_change.idxmax()
+peak_change = yoy_change.max()
+
+print(f"Steepest YoY increase: {peak_year}")
+print(f"Change: {peak_change*100:.2f} percentage points")
+print(f"LFP {peak_year-1}: {lfp_by_year[peak_year-1]:.1%}")
+print(f"LFP {peak_year}: {lfp_by_year[peak_year]:.1%}")
 ```
 
-**Discussion:**
+```{python}
+fig, ax = plt.subplots(figsize=(9, 4))
+colors = ['#DE8F05' if y == peak_year else '#0173B2' for y in yoy_change.index]
+ax.bar(yoy_change.index, yoy_change.values * 100, color=colors)
+ax.axhline(0, color='black', linewidth=0.8)
+ax.set_xlabel('Year')
+ax.set_ylabel('YoY Change in LFP (percentage points)')
+ax.set_title('Year-over-Year Change in Female LFP, 1995–2024', loc='left',
+             fontsize=12, fontweight='bold')
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3, axis='y')
+plt.tight_layout()
+plt.show()
+```
 
-*[Most likely candidate: 2020→2021 COVID recovery. Discuss: pandemic-related
-exits in 2020, stimulus/reopening in 2021, industry composition of recovery.
-Cite relevant literature if possible (e.g., Albanesi & Kim 2021 on women
-and COVID recession). If it's a different year, explain why.]*
+Discussion: The data points to 1997 as the steepest YoY increase with 1.08 percentage point increase. Congress passed the Personal Responsibility and Work Opportunity Reconciliation Act in 1996, which added work requirements for single mothers receiving transfer payments. I beleive this would potentially contribute to the jump prima facie. Such policy changes would appear as shocks to the labor supply for the female population, as demonstrated by Meyer and Rosenbaum in their 2001 study. 
 
 
 ## Q5: LFP by College Education
 
-How has labor force participation for college-educated and not college-educated women
-evolved since 1994? Please provide graphs and/or tables to support your answer. 
+How has labor force participation for college-educated and not college-educated women evolved since 1994? Please provide graphs and/or tables to support your answer. 
 
 ```{python}
-# TODO: weighted LFP by year × college (Yes/No), all women
-# Two-line plot: college-educated vs. not
+lfp_college = lfp_by_year_group(df_w25, 'college')
+
+fig, ax = plt.subplots(figsize=(9, 5.5))
+lfp_college.plot(ax=ax, marker='o', markersize=4, linewidth=1.8)
+
+ax.axvspan(2007, 2009, alpha=0.12, color='gray', zorder=0)
+ax.axvspan(2020, 2020.5, alpha=0.12, color='gray', zorder=0)
+
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=0))
+ax.set_xlabel('Year')
+ax.set_ylabel('Labor Force Participation Rate')
+ax.set_title('Female LFP by College Education, Women 25+', loc='left',
+             fontsize=12, fontweight='bold')
+ax.legend(title='Education', frameon=False, loc='lower left')
+ax.spines[['top', 'right']].set_visible(False)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+endpoint_change_table = lfp_college.apply(endpoint_change).T
+endpoint_change_table
 ```
 
-**Discussion:**
-
-*[Describe the gap. Has it widened or narrowed? How did COVID differentially
-affect each group?]*
+I only included those older than 25, becaue 22 is the normal age of college graduates and age of first job post-college can depend on labor market conditions and business cycles. 
+As shown on the graph, female labor force participation for those over the age of 25 seems to be decreasing over all, notably after the great recession and covid-19 pandemic. However, labor force particpation rate of college degree holders is significantly higher than those without. 
+College-educated women also suffered a smaller LFP drop in 2020. 
 
 
 ## Q6: Alternative LFP Measure (Excluding Self-Employed)
 
-Create an alternative measure of labor force participation that excludes individuals
-from the labor force if they are self-employed in their main job (lfp = 0 if self-employed
-in main job). Using the new measure, describe how labor force participation for college-
-educated and not college-educated women has evolved since 1994. Please provide
-graphs and/or tables to support your answer.
+Create an alternative measure of labor force participation that excludes individuals from the labor force if they are self-employed in their main job (lfp = 0 if self-employed in main job). Using the new measure, describe how labor force participation for college-educated and not college-educated women has evolved since 1994. Please provide graphs and/or tables to support your answer.
 
 ```{python}
+# verify self employment flag for female subset
+df_w25['self_employed'].value_counts(dropna=False)
+
+pd.crosstab(df_w25['lfp'], df_w25['self_employed'].fillna('NaN'), dropna=False)
+
 # TODO: construct lfp_alt
 # lfp_alt = 1 if (lfp == "Yes" AND self_employed != "Yes"), else 0
 # Verify: what share of LFP participants are self-employed? Does this
