@@ -325,13 +325,21 @@ plt.show()
 ```
 
 ```{python}
-def endpoint_change(series, start=(1994, 1995, 1996), end=(2022, 2023, 2023)):
+def endpoint_change(series, start=(1994, 1995, 1996), end=(2022, 2023)):
+    # .reindex() is "safe" - it returns NaN for missing years instead of crashing
+    start_vals = series.reindex(list(start))
+    end_vals = series.reindex(list(end))
+    
+    start_mean = start_vals.mean()
+    end_mean = end_vals.mean()
+    
     return pd.Series({
-        '1994-96': series.loc[list(start)].mean(),
-        '2022-24': series.loc[list(end)].mean(),
-        'Change (pp)': (series.loc[list(end)].mean() - series.loc[list(start)].mean()) * 100
+        '1994-96': start_mean,
+        '2022-23': end_mean,
+        'Change (pp)': (end_mean - start_mean) * 100
     })
 
+# The rest of your logic remains the same
 summary = pd.concat([
     lfp_race.apply(endpoint_change).T.assign(Dimension='Race'),
     lfp_age.apply(endpoint_change).T.assign(Dimension='Age'),
@@ -339,7 +347,7 @@ summary = pd.concat([
 ]).reset_index().rename(columns={'index': 'Group'})
 
 summary = summary[['Dimension', 'Group', '1994-96', '2022-23', 'Change (pp)']]
-summary
+display(summary)
 ```
 **Discussion:**
 
@@ -660,10 +668,13 @@ for col in ['telework_now', 'covid_telework', 'telework_before']:
 ```
 
 ```{python}
+df_women = df[df['sex'] == 'Female'].copy()
+
 # Subset: women in years where telework is observed
 df_tw = df_women.loc[df_women['telework_now'].notna()].copy()
 df_tw['teleworked'] = (df_tw['telework_now'] == 'Had telework in the past week').astype(int)
 df_tw['employed_bin'] = (df_tw['employed'] == 'Employed').astype(int)
+df_tw['lfp_bin'] = (df_tw['lfp'] == 'In labor force').astype(int)
 
 print(df_tw.groupby('year')['teleworked'].agg(['mean', 'size']))
 ```
@@ -671,10 +682,7 @@ print(df_tw.groupby('year')['teleworked'].agg(['mean', 'size']))
 ### Wages by Telework Status
 
 ```{python}
-print(f"df_tw rows: {len(df_tw)}")
-print(f"df_tw_inc rows: {len(df_tw_inc)}")
-print(f"income > 0 count: {(df_tw_inc['income'] > 0).sum()}")
-print(df_tw.groupby('year')['income'].apply(lambda x: x.notna().sum()))
+
 ```
 
 Note: Wage comparisons by telework status are not feasible in this extract: telework variables (telework_now) are populated in 2023–2024 basic monthly CPS, while income variables come from the ASEC supplement, with no overlapping observations. The employment and LFP comparisons below use the basic monthly sample where telework is observed. 
