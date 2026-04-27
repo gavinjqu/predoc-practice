@@ -29,6 +29,7 @@
 | Acemonglu | xxxx | Why do new technology complement skills? Directed technical change and wage inequality | 
 | Athey | xxxx | Causal Forest | How CART can be modified to construct causal forest that is used for valid statistical inference | An Algorithmic approach to use random forest as statistical inference instruments to identify heterogenous treatment effect | Two forests are constructed to form counterfactual | ML methods for casual inference is the frontier of applied method research | 
 | Kenneth Arrow | 1963 | Normative analysis medical care | Corollary of optimality theorems | 1st - if competitive equilibrium exist, it's the pareto outcome, 2nd - if no increasing returns in production, then every optimal state is a competitive equilibrium. Supply and demand of medical care comparatively to other markets, and how uncertainty plays a pivot role in healthcare preferences and decisions. | Healthcare market angle of labor econ | 
+| Callaway and Sant'Anna | 2020 | Use of staggered DiD and research design | staggered DiD when treatment timing is heterogenous | ** | ** | 
 
 ---
 
