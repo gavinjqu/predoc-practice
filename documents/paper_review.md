@@ -12,8 +12,9 @@
 
 ## 3. Three Passes
     1. The scan - Abstract, Intro, Conclusion and Tables
-    2. Institutional context and data
-    3. Robustness check - do results change after adding control or sample changes?
+    2. Institutional context, data, and research question
+    3. Identification strategy 
+    4. Robustness check - do results change after adding control or sample changes?
 
 ## 4. Write it down, See Table and Templates Below
 
@@ -36,7 +37,7 @@
 
 ---
 
-# Four Foundational Questions
+# Four Foundational Questions (From *Mostly Harmless*)
 ## 1. What is the causal relationship of interest? 
 * relationship should be useful for making counterfactual predictions
 * The questions must not be "Fundamentally unidentifiable" (FUQ'ed), e.g. age effect in school
@@ -61,38 +62,10 @@
 ## 5. Internal vs. External Validity
 * Internal validity: Does the research design successfully uncover the true causal effect for the population being studied?
 * External validity: Can the study's findings be used to predict outcomes in different contexts or for different populations?
-    * Instrumental Variables estimates often capture a Local Average Treatment Effect (LATE)—the effect specifically for "compliers" whose behavior was changed by the instrument
-
----
-
-# [Paper Title]
-**Authors:** [Author 1, Author 2]
-**Year:** [YYYY] | **Journal/Working Paper:** [Journal Name or NBER]
-**Tags:** #Methodology (e.g., #IV, #DiD), #Topic (e.g., #Labor, #Health), #Data (e.g., #Administrative, #WebScraped)
-
----
-
-### 1. What is the causal relationship of interest?
-* **The Core Question:** (What is the exact counterfactual prediction being made? *Check: Is this a Fundamentally Unidentifiable Question (FUQ)?*)
-* **The Stakes:** (If this estimate is right, what theoretical model gets updated, or what policy changes?)
-
-### 2. What is the ideal experiment?
-* **The Gold Standard RCT:** (If you had infinite money and zero ethical constraints, what randomized controlled trial would perfectly capture this causal effect?)
-
-### 3. What is the identification strategy?
-* **The Method:** (How is observational data being used to approximate the ideal experiment? e.g., Regression Control/CIA, IV, DiD, RD.)
-* **The Identifying Assumption:** (What MUST be true for this to be causal? e.g., parallel trends, strictly exogenous instrument, random assignment around the cutoff.)
-* **Control Strategy & "Bad Controls":** (What observable covariates are held fixed? *Check: Are they making the mistake of controlling for variables that are themselves outcomes of the treatment?*)
-* **The Data Architecture:** (What is the primary dataset? What is the core challenge in their data pipeline?)
-
-### 4. What is the mode of statistical inference?
-* **Sample vs. Population:** (What specific population is explicitly studied, and what sample is drawn from it?)
-* **Standard Errors & Clustering:** (How are they constructing standard errors? *Check: Are they properly handling group structures/the Moulton problem and serial correlation to avoid false significance?*)
-
-### 5. Internal vs. External Validity (The Seminar Attack)
-* **Internal Validity:** (Does the design successfully uncover the true causal effect for this specific sample? If I were in a seminar, what unobserved confounder or exclusion restriction violation would I attack?)
-* **External Validity / LATE:** (Can this predict outcomes in different contexts? If using an IV, who exactly are the "compliers," and what is the Local Average Treatment Effect?)
+* Instrumental Variables estimates often capture a Local Average Treatment Effect (LATE)—the effect specifically for "compliers" whose behavior was changed by the instrument
 
 ### 6. Idea Generation (Spillovers)
 * **The Method-Data Swap:** (Could I take this exact identification strategy and apply it to a dataset I have access to?)
 * **The Next Step:** (What is the obvious follow-up paper that hasn't been written yet?)
+
+---
