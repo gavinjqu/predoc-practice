@@ -16,24 +16,32 @@
     3. Identification strategy 
     4. Robustness check - do results change after adding control or sample changes?
 
-## 4. Write it down, See Table and Templates Below
+## 4. Write it down
 
---- 
-<br> 
+Per-paper notes live in [papers/](papers/), one file per paper. The table below is the index. Each linked note holds: identification, methodology, key insight, and relevance to my research.
 
-| Author | Year | Research Title | Methodology | Key "aha" moment | Relevance to my work and Corollary Research Questions |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| Athey | 2019 | Causal Inference vs. ML | Meta analysis | the hotel pricing example: causality matters when you regress demand on price, increase in price often appears to be correlated with increase in demand (selection bias: yield management software determines price driven by seasonal demand). ML model will perfectly predict that but we cannot draw sensible causal claim from it | fundamental difference between econ and data science 
-| Card | 1999 | Causal Effect of Education on Earnings | IV and family fixed-effects | within family and between family fixed effect, IV have higher upward bias than OLS, possible selection bias on groups affected by structural innovation such as pupil teacher ratio | canonical paper on IV and education
-| Card | 1999 | Causal Return on Education | IV and RCT | "" | seminal paper for return on education | 
-| Spence | 1973 | Signaling via Education Cost | Theory | Applicants will invest in a signal if the offered wage increase is greater than the cost of acquiring the signal, high-productivity workers must find it cheaper or easier to signal than low-productivity workers. | education is not actually making the workers more productive; it simply acts as a prerequisite to prove they are high-productivity | 
-| Acemonglu | 1998 | Why do new technology complement skills? Directed technical change and wage inequality | 
-| Athey | 2015 | Causal Forest | How CART can be modified to construct causal forest that is used for valid statistical inference | An Algorithmic approach to use random forest as statistical inference instruments to identify heterogenous treatment effect | Two forests are constructed to form counterfactual | ML methods for casual inference is the frontier of applied method research | 
-| Kenneth Arrow | 1963 | Normative analysis medical care | Corollary of optimality theorems | 1st - if competitive equilibrium exist, it's the pareto outcome, 2nd - if no increasing returns in production, then every optimal state is a competitive equilibrium. Supply and demand of medical care comparatively to other markets, and how uncertainty plays a pivot role in healthcare preferences and decisions. | Healthcare market angle of labor econ | 
-| Callaway and Sant'Anna | 2020 | Use of staggered DiD and research design | staggered DiD when treatment timing is heterogenous|  canonical 2x2 DiD estimator is biased in staggered setting when previously treated units are used as controls for later shocks, CS resolves this by grouping by cohort and treated and calendar time when outcome is measure, and uses this tuple=(g, t) to estimate ATT(g, t) whhich is the average treatment effect, at calendar time t, for the cohort first treated at time g. | The classical two-way fixed-effects regression collapses everything into one number and, under heterogeneous treatment effects, mixes early-treated units into the control group for later cohorts — producing negative weights and possibly sign-flipped estimates. CS sidesteps this by never using already-treated units as controls. This is applicable in health shock settings and with policy evaluation situations when adoption is staggered, such as staggered legalization of online gambling or paid maternity leave programs  | 
-| Dix | 2025 | Combining Complements: Theory and Evidence from Cancer Treatment Innovation | Using micro data on combination therapy to measure externality and spillover, dynamic structural model | Combination innovation is ubiquitous in software and pharmaceutical industry, often results in marginal private cost exceeding the marginal social cost, leading to underproduction of innovation | Industrial IO and its implication in the market for health | 
-| Sadoff | 2024 | College Summar School | Field Experiment with scholarship offer at community college | Experimental result shows that summer school scholarship for summer semester classes increases community college transfer rate to four-year universities and GPAs. Especially since over eighty percent of students intend to transfer to a four-year college, but only about a quarter achieve that goal. Uses a IV for LATE framework due to selection bias from never-takers. In this framework, the actual treatment ($D$) is endogenous (chosen by the human). But the random assignment ($Z$) is perfectly exogenous. Therefore, this is measuring the causal effect of the *compliers*. | This demonstrate the practicality and robustness of experimental design and its intersection with IV methodology. | 
-| Kenneth Arrow | 1962 | Innovation and Resource Allocation | Theoretical | Monopoly and competitive equilibrium both result in the underproduction of innovation in form of inventions, since resources should be devoted to invention until the expected marginal social benefit there equals the marginal social benefit, government, university and private funding intervenes to produce at optimal amount | allocation of resources and industrial organization topics revolving around healthcare and medical innovation is heavily studied with invention of new AI tools | 
+### Weekly routine
+
+1. Read the paper using the Three Passes above.
+2. Copy the template: `cp papers/_template.md papers/{lastauthor}-{year}_{slug}.md`.
+3. Fill in the five fields — aim for ~10 minutes; these are notes, not essays.
+4. Add a row to the index table below.
+5. Skim the last 3–5 notes and add `[[related]]` wikilinks where the new paper connects to old ones — that's how the lit review writes itself over time.
+
+### Index
+
+| Author | Year | Title | Methodology | Note |
+| :--- | :--- | :--- | :--- | :--- |
+| Athey | 2019 | Causal Inference vs. ML | Meta-analysis | [link](papers/athey-2019_causal-vs-ml.md) |
+| Card | 1999 | Returns to Education | IV, family FE | [link](papers/card-1999_returns-to-education.md) |
+| Spence | 1973 | Signaling via Education | Theory | [link](papers/spence-1973_signaling-via-education.md) |
+| Acemoglu | 1998 | Directed Technical Change and Wage Inequality | Theory | [link](papers/acemoglu-1998_directed-technical-change.md) |
+| Athey & Imbens | 2015 | Causal Forest | ML for causal inference | [link](papers/athey-2015_causal-forest.md) |
+| Arrow | 1963 | Uncertainty and the Welfare Economics of Medical Care | Theory | [link](papers/arrow-1963_normative-medical-care.md) |
+| Callaway & Sant'Anna | 2020 | Staggered DiD | DiD | [link](papers/callaway-santanna-2020_staggered-did.md) |
+| Dix | 2025 | Combining Complements (Cancer Treatment Innovation) | Dynamic structural | [link](papers/dix-2025_combining-complements.md) |
+| Sadoff | 2024 | College Summer School | RCT + IV-LATE | [link](papers/sadoff-2024_college-summer-school.md) |
+| Arrow | 1962 | Innovation and Resource Allocation | Theory | [link](papers/arrow-1962_innovation-resource-allocation.md) |
 
 ---
 
