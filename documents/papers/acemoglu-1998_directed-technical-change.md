@@ -9,12 +9,12 @@ added: 2026-05-23
 
 # Acemoglu 1998 — Directed Technical Change and Wage Inequality
 
-**Identification:** _To fill in after reading._
+**Identification:** Decrease in relative skill premium in the 1970 with a subsequent increase in the 1980s among college graduates. 
 
-**Methodology:** _To fill in after reading._
+**Methodology:** Theoretical paper 
 
-**Key insight:** _To fill in after reading._
+**Key insight:** Technology complements skilled labor when increasing input from one component monotonically increases the composite of both, where partial derivative of F(x,y) > 0. In the short run, increase in skilled-labor decreases the short run skill premium from supply increases. However, over time, skill-biased technical changes will complement skilled labor and increase the skill premium above the previous level. 
 
-**Relevance to my research:** _To fill in after reading._ Likely central to any analysis connecting skill-biased technical change to returns to schooling.
+**Relevance to my research:** Central to any analysis connecting skill-biased technical change to returns to schooling. 
 
 **Related:** [[card-1999_returns-to-education]], [[spence-1973_signaling-via-education]]

@@ -7,8 +7,8 @@
 * The exclusion restriction
 * external validity 
 
-## 2. ML vs Causal Method
-* $R^2, MSE$ vs. bias of $\hat{\beta}$
+## 2. Study Design
+* what's the treatment, what's the outcome, what's the threat to identification? 
 
 ## 3. Three Passes
     1. The scan - Abstract, Intro, Conclusion and Tables
