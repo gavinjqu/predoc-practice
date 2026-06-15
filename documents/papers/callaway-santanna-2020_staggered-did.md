@@ -15,7 +15,7 @@ added: 2026-05-23
 
 **Key insight:** The classical two-way fixed-effects regression collapses everything into one number and, under heterogeneous treatment effects, mixes early-treated units into the control group for later cohorts — producing negative weights and possibly sign-flipped estimates. CS sidesteps this by never using already-treated units as controls.
 Conditional DiD allows the parallel trends to be more plausible when covariates such as age, employment, education are endogenous. 
-Example: The effect of minimum wage policy on teen employment. 
+Example: The effect of minimum wage policy on teen employment comparing results from both unconditional and conditional parallel trends; also provided nonparametric identification results leading to outcome regression, inverse probability weighting, and doubly robust methods.
 
 **Relevance to my research:** Applicable in any policy-evaluation setting with staggered adoption — e.g., staggered legalization of online gambling, paid maternity leave programs, Medicaid expansions, or any rollout-style health shock.
 
